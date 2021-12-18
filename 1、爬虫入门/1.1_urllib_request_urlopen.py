@@ -20,3 +20,4 @@ with response:
     print(6, response._method)                  # GET方法
 
 print(response.closed)                          # True
+
