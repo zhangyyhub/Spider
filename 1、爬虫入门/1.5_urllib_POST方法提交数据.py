@@ -6,6 +6,7 @@
 
 from urllib.request import Request, urlopen
 from urllib.parse import urlencode
+import json
 
 request_obj = Request('http://httpbin.org/post')
 request_obj.add_header(
@@ -19,5 +20,4 @@ print(data)
 # POST方法,From提交数据,不做url编码会有风险
 with urlopen(request_obj, data=data.encode()) as res:
     print(res.read())
-
 
