@@ -4,30 +4,52 @@
 # author    : Yannic Zhang
 # explain   : None
 
-from selenium import webdriver
-from PIL import Image
+import requests
+from hashlib import md5
 
-url = "https://www.chaojiying.com/user/login/"
-# 创建浏览器对象
-chrome = webdriver.Chrome()
-# 发送请求
-chrome.get(url)
-# 窗口最大化
-chrome.maximize_window()
-# 页面截图
-chrome.save_screenshot("login.png")
-# 获取坐标
-img = chrome.find_element_by_xpath("/html/body/div[3]/div/div[3]/div[1]/form/div/img")
-location = img.location
-# 获取图片大小
-size = img.size
-x1 = location['x']
-y1 = location['y']
-x2 = location['x'] + size['width']
-y2 = location['y'] + size['height']
+class Chaojiying_Client(object):
 
-# 读取图片
-img_ = Image.open("login.png")
-# 裁剪图片
-res_ = img_.crop((x1, y1, x2, y2))
-res_.save("cjy.png")
+    def __init__(self, username, password, soft_id):
+        self.username = username
+        password =  password.encode('utf8')
+        self.password = md5(password).hexdigest()
+        self.soft_id = soft_id
+        self.base_params = {
+            'user': self.username,
+            'pass2': self.password,
+            'softid': self.soft_id,
+        }
+        self.headers = {
+            'Connection': 'Keep-Alive',
+            'User-Agent': 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.1; Trident/4.0)',
+        }
+
+    def PostPic(self, im, codetype):
+        """
+        im: 图片字节
+        codetype: 题目类型 参考 http://www.chaojiying.com/price.html
+        """
+        params = {
+            'codetype': codetype,
+        }
+        params.update(self.base_params)
+        files = {'userfile': ('ccc.jpg', im)}
+        r = requests.post('http://upload.chaojiying.net/Upload/Processing.php', data=params, files=files, headers=self.headers)
+        return r.json()
+
+    def ReportError(self, im_id):
+        """
+        im_id:报错题目的图片ID
+        """
+        params = {
+            'id': im_id,
+        }
+        params.update(self.base_params)
+        r = requests.post('http://upload.chaojiying.net/Upload/ReportError.php', data=params, headers=self.headers)
+        return r.json()
+
+
+if __name__ == '__main__':
+	chaojiying = Chaojiying_Client('超级鹰用户名', '超级鹰用户名的密码', '软件ID')
+	im = open('a.jpg', 'rb').read()
+	print(chaojiying.PostPic(im, 1902))
